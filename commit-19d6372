@@ -1,0 +1,19 @@
+commit 19d63727d2205f8550fa35bef6b67e54e73ea678
+Author: Geoffrey McRae <gnif@xbmc.org>
+Date:   Tue Jan 17 01:09:18 2012 +1100
+
+    [AE] fixed setting string offset problem
+
+diff --git a/xbmc/settings/GUISettings.cpp b/xbmc/settings/GUISettings.cpp
+index 1632c2b..ce6c1f8 100644
+--- a/xbmc/settings/GUISettings.cpp
++++ b/xbmc/settings/GUISettings.cpp
+@@ -438,7 +438,7 @@ void CGUISettings::Initialize()
+ 
+   map<int,int> channelLayout;
+   for(int layout = AE_CH_LAYOUT_2_0; layout < AE_CH_LAYOUT_MAX; ++layout)
+-    channelLayout.insert(make_pair(34101+layout, layout));
++    channelLayout.insert(make_pair(34100+layout, layout));
+   AddInt(ao, "audiooutput.channellayout", 34100, AE_CH_LAYOUT_2_0, channelLayout, SPIN_CONTROL_TEXT);
+   AddBool(ao, "audiooutput.dontnormalizelevels", 346, true);
+ 

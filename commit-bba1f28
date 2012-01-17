@@ -1,0 +1,111 @@
+commit bba1f289c11f0c081f0608b3df6e03bb150aba6c
+Author: Geoffrey McRae <gnif@xbmc.org>
+Date:   Mon Jan 16 20:14:46 2012 +1100
+
+    [PAP] Added channel map information for FLAC
+    [PAP] made m_Channels private to ensure it is not used anymore
+
+diff --git a/xbmc/cores/paplayer/AudioDecoder.cpp b/xbmc/cores/paplayer/AudioDecoder.cpp
+index e784302..e2a64b9 100644
+--- a/xbmc/cores/paplayer/AudioDecoder.cpp
++++ b/xbmc/cores/paplayer/AudioDecoder.cpp
+@@ -86,7 +86,7 @@ bool CAudioDecoder::Create(const CFileItem &file, __int64 seekOffset)
+     Destroy();
+     return false;
+   }
+-  m_blockSize = (m_codec->m_BitsPerSample >> 3) * m_codec->m_Channels;
++  m_blockSize = (m_codec->m_BitsPerSample >> 3) * m_codec->GetChannelInfo().Count();
+ 
+   /* allocate the pcmBuffer for 2 seconds of audio */
+   m_pcmBuffer.Create(2 * m_blockSize * m_codec->m_SampleRate);
+@@ -182,7 +182,7 @@ int CAudioDecoder::ReadSamples(int numsamples)
+   // Read in more data
+   int maxsize = std::min<int>(INPUT_SAMPLES, m_pcmBuffer.getMaxWriteSize() / (m_codec->m_BitsPerSample >> 3));
+   numsamples = std::min<int>(numsamples, maxsize);
+-  numsamples -= (numsamples % m_codec->m_Channels);  // make sure it's divisible by our number of channels
++  numsamples -= (numsamples % m_codec->GetChannelInfo().Count());  // make sure it's divisible by our number of channels
+   if ( numsamples )
+   {
+     int readSize = 0;
+diff --git a/xbmc/cores/paplayer/AudioDecoder.h b/xbmc/cores/paplayer/AudioDecoder.h
+index b217488..391fc17 100644
+--- a/xbmc/cores/paplayer/AudioDecoder.h
++++ b/xbmc/cores/paplayer/AudioDecoder.h
+@@ -70,7 +70,7 @@ public:
+   void SetStatus(int status) { m_status = status; };
+ 
+   void GetDataFormat(CAEChannelInfo *channelInfo, unsigned int *samplerate, enum AEDataFormat *dataFormat);
+-  unsigned int GetChannels() { if (m_codec) return m_codec->m_Channels; else return 0; };
++  unsigned int GetChannels() { if (m_codec) return m_codec->GetChannelInfo().Count(); else return 0; };
+   // Data management
+   unsigned int GetDataSize();
+   void *GetData(unsigned int samples);
+diff --git a/xbmc/cores/paplayer/FLACcodec.cpp b/xbmc/cores/paplayer/FLACcodec.cpp
+index caffdab..209d235 100644
+--- a/xbmc/cores/paplayer/FLACcodec.cpp
++++ b/xbmc/cores/paplayer/FLACcodec.cpp
+@@ -314,6 +314,20 @@ void FLACCodec::DecoderMetadataCallback(const FLAC__StreamDecoder *decoder, cons
+ 
+   if (metadata->type==FLAC__METADATA_TYPE_STREAMINFO)
+   {
++    static enum AEChannel map[6][7] = {
++      {AE_CH_FC, AE_CH_NULL},
++      {AE_CH_FL, AE_CH_FR, AE_CH_NULL},
++      {AE_CH_FL, AE_CH_FR, AE_CH_FC, AE_CH_NULL},
++      {AE_CH_FL, AE_CH_FR, AE_CH_BL, AE_CH_BR, AE_CH_NULL},
++      {AE_CH_FL, AE_CH_FR, AE_CH_FC, AE_CH_BL, AE_CH_BR, AE_CH_NULL},
++      {AE_CH_FL, AE_CH_FR, AE_CH_FC, AE_CH_LFE, AE_CH_BL, AE_CH_BR, AE_CH_NULL}
++    };
++
++    /* channel counts greater then 6 are undefined */
++    if (metadata->data.stream_info.channels > 6)
++         pThis->m_ChannelInfo = CAEUtil::GuessChLayout(metadata->data.stream_info.channels);
++    else pThis->m_ChannelInfo = CAEChannelInfo(map[metadata->data.stream_info.channels - 1]);
++
+     pThis->m_SampleRate    = metadata->data.stream_info.sample_rate;
+     pThis->m_Channels      = metadata->data.stream_info.channels;
+     pThis->m_BitsPerSample = metadata->data.stream_info.bits_per_sample;
+diff --git a/xbmc/cores/paplayer/FLACcodec.h b/xbmc/cores/paplayer/FLACcodec.h
+index 205c218..beecd84 100644
+--- a/xbmc/cores/paplayer/FLACcodec.h
++++ b/xbmc/cores/paplayer/FLACcodec.h
+@@ -35,6 +35,7 @@ public:
+   virtual __int64 Seek(__int64 iSeekTime);
+   virtual int ReadPCM(BYTE *pBuffer, int size, int *actualsize);
+   virtual bool CanInit();
++  virtual CAEChannelInfo GetChannelInfo() {return m_ChannelInfo;}
+ 
+ private:
+   //  I/O callbacks for the flac decoder
+@@ -54,4 +55,5 @@ private:
+   int m_BufferSize;                   //  size of buffer is filled with decoded audio data
+   int m_MaxFrameSize;                 //  size of a single decoded frame
+   FLAC__StreamDecoder* m_pFlacDecoder;
++  CAEChannelInfo m_ChannelInfo;
+ };
+diff --git a/xbmc/cores/paplayer/ICodec.h b/xbmc/cores/paplayer/ICodec.h
+index 6394ad5..0412b64 100644
+--- a/xbmc/cores/paplayer/ICodec.h
++++ b/xbmc/cores/paplayer/ICodec.h
+@@ -94,16 +94,19 @@ public:
+ 
+   // GetChannelInfo()
+   // Return the channel layout and count information in an CAEChannelInfo object
+-  virtual CAEChannelInfo GetChannelInfo() {return CAEUtil::GuessChLayout(this->m_Channels);}
++  virtual CAEChannelInfo GetChannelInfo() {return CAEUtil::GuessChLayout(m_Channels);}
+ 
+   __int64 m_TotalTime;  // time in ms
+   int m_SampleRate;
+   int m_BitsPerSample;
+-  int m_Channels;
+   enum AEDataFormat m_DataFormat;
+   int m_Bitrate;
+   CStdString m_CodecName;
+   CReplayGain m_replayGain;
+   XFILE::CFile m_file;
++
++protected:
++  int m_Channels; /* remove this soon, its being deprecated */
++
+ };
+ 

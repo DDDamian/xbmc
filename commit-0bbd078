@@ -1,0 +1,144 @@
+commit 0bbd078e5cd1e5aafd3d9da425261def170290fa
+Author: Geoffrey McRae <gnif@xbmc.org>
+Date:   Mon Jan 16 19:52:37 2012 +1100
+
+    [PAP] Altered ICodec to return CAEChannelInfo and AudioDecoder to return it
+
+diff --git a/xbmc/cores/paplayer/AudioDecoder.cpp b/xbmc/cores/paplayer/AudioDecoder.cpp
+index ff65b35..e784302 100644
+--- a/xbmc/cores/paplayer/AudioDecoder.cpp
++++ b/xbmc/cores/paplayer/AudioDecoder.cpp
+@@ -103,14 +103,14 @@ bool CAudioDecoder::Create(const CFileItem &file, __int64 seekOffset)
+   return true;
+ }
+ 
+-void CAudioDecoder::GetDataFormat(unsigned int *channels, unsigned int *samplerate, enum AEDataFormat *dataFormat)
++void CAudioDecoder::GetDataFormat(CAEChannelInfo *channelInfo, unsigned int *samplerate, enum AEDataFormat *dataFormat)
+ {
+   if (!m_codec)
+     return;
+ 
+-  if (channels  ) *channels = m_codec->m_Channels;
+-  if (samplerate) *samplerate = m_codec->m_SampleRate;
+-  if (dataFormat) *dataFormat = m_codec->m_DataFormat;
++  if (channelInfo) *channelInfo = m_codec->GetChannelInfo();
++  if (samplerate ) *samplerate  = m_codec->m_SampleRate;
++  if (dataFormat ) *dataFormat  = m_codec->m_DataFormat;
+ }
+ 
+ __int64 CAudioDecoder::Seek(__int64 time)
+diff --git a/xbmc/cores/paplayer/AudioDecoder.h b/xbmc/cores/paplayer/AudioDecoder.h
+index fdae772..b217488 100644
+--- a/xbmc/cores/paplayer/AudioDecoder.h
++++ b/xbmc/cores/paplayer/AudioDecoder.h
+@@ -25,6 +25,7 @@
+ #include "ICodec.h"
+ #include "threads/CriticalSection.h"
+ #include "utils/RingBuffer.h"
++#include "cores/AudioEngine/Utils/AEChannelInfo.h"
+ 
+ class CFileItem;
+ 
+@@ -68,7 +69,7 @@ public:
+   int GetStatus() { return m_status; };
+   void SetStatus(int status) { m_status = status; };
+ 
+-  void GetDataFormat(unsigned int *channels, unsigned int *samplerate, enum AEDataFormat *dataFormat);
++  void GetDataFormat(CAEChannelInfo *channelInfo, unsigned int *samplerate, enum AEDataFormat *dataFormat);
+   unsigned int GetChannels() { if (m_codec) return m_codec->m_Channels; else return 0; };
+   // Data management
+   unsigned int GetDataSize();
+diff --git a/xbmc/cores/paplayer/ICodec.h b/xbmc/cores/paplayer/ICodec.h
+index f70415e..6394ad5 100644
+--- a/xbmc/cores/paplayer/ICodec.h
++++ b/xbmc/cores/paplayer/ICodec.h
+@@ -24,7 +24,9 @@
+ #include "ReplayGain.h"
+ #include "utils/StdString.h"
+ #include "filesystem/File.h"
++
+ #include "cores/AudioEngine/AEAudioFormat.h"
++#include "cores/AudioEngine/Utils/AEUtil.h"
+ 
+ #define READ_EOF      -1
+ #define READ_SUCCESS   0
+@@ -90,11 +92,15 @@ public:
+   virtual bool IsCaching()    const    {return false;}
+   virtual int GetCacheLevel() const    {return -1;}
+ 
++  // GetChannelInfo()
++  // Return the channel layout and count information in an CAEChannelInfo object
++  virtual CAEChannelInfo GetChannelInfo() {return CAEUtil::GuessChLayout(this->m_Channels);}
++
+   __int64 m_TotalTime;  // time in ms
+   int m_SampleRate;
+   int m_BitsPerSample;
+-  enum AEDataFormat m_DataFormat;
+   int m_Channels;
++  enum AEDataFormat m_DataFormat;
+   int m_Bitrate;
+   CStdString m_CodecName;
+   CReplayGain m_replayGain;
+diff --git a/xbmc/cores/paplayer/PAPlayer.cpp b/xbmc/cores/paplayer/PAPlayer.cpp
+index c062b7a..f20f9a3 100644
+--- a/xbmc/cores/paplayer/PAPlayer.cpp
++++ b/xbmc/cores/paplayer/PAPlayer.cpp
+@@ -272,9 +272,9 @@ bool PAPlayer::QueueNextFileEx(const CFileItem &file, bool fadeIn/* = true */)
+   }
+   
+   /* init the streaminfo struct */
+-  si->m_decoder.GetDataFormat(&si->m_channels, &si->m_sampleRate, &si->m_dataFormat);
++  si->m_decoder.GetDataFormat(&si->m_channelInfo, &si->m_sampleRate, &si->m_dataFormat);
+   si->m_bytesPerSample     = CAEUtil::DataFormatToBits(si->m_dataFormat) >> 3;
+-  si->m_samplesPerSecond   = si->m_sampleRate * si->m_channels;
++  si->m_samplesPerSecond   = si->m_sampleRate * si->m_channelInfo.Count();
+   si->m_started            = false;
+   si->m_finishing          = false;
+   si->m_samplesSent        = 0;
+@@ -285,12 +285,12 @@ bool PAPlayer::QueueNextFileEx(const CFileItem &file, bool fadeIn/* = true */)
+   
+   if (si->m_decoder.TotalTime() < TIME_TO_CACHE_NEXT_FILE + m_crossFadeTime)
+        si->m_prepareNextAtSample = 0;
+-  else si->m_prepareNextAtSample = (si->m_decoder.TotalTime() - TIME_TO_CACHE_NEXT_FILE - m_crossFadeTime) * (si->m_sampleRate * si->m_channels) / 1000.0f;
++  else si->m_prepareNextAtSample = (si->m_decoder.TotalTime() - TIME_TO_CACHE_NEXT_FILE - m_crossFadeTime) * (si->m_sampleRate * si->m_channelInfo.Count()) / 1000.0f;
+   si->m_prepareTriggered = false;
+   
+   if (si->m_decoder.TotalTime() < m_crossFadeTime)
+-       si->m_playNextAtSample = (si->m_decoder.TotalTime() / 2) * (si->m_sampleRate * si->m_channels) / 1000.0f;
+-  else si->m_playNextAtSample = (si->m_decoder.TotalTime() - m_crossFadeTime) * (si->m_sampleRate * si->m_channels) / 1000.0f;
++       si->m_playNextAtSample = (si->m_decoder.TotalTime() / 2) * (si->m_sampleRate * si->m_channelInfo.Count()) / 1000.0f;
++  else si->m_playNextAtSample = (si->m_decoder.TotalTime() - m_crossFadeTime) * (si->m_sampleRate * si->m_channelInfo.Count()) / 1000.0f;
+   si->m_playNextTriggered = false;
+    
+   /* add the stream to the list */
+@@ -310,7 +310,7 @@ inline bool PAPlayer::PrepareStream(StreamInfo *si)
+   si->m_stream = CAEFactory::AE->MakeStream(
+     si->m_dataFormat,
+     si->m_sampleRate,
+-    CAEUtil::GuessChLayout(si->m_channels), /* FIXME: channelLayout */
++    si->m_channelInfo,
+     AESTREAM_PAUSED
+   );
+ 
+@@ -658,7 +658,7 @@ int PAPlayer::GetChannels()
+   if (!m_currentStream)
+     return 0;
+ 
+-  return m_currentStream->m_channels;
++  return m_currentStream->m_channelInfo.Count();
+ }
+ 
+ int PAPlayer::GetBitsPerSample()
+diff --git a/xbmc/cores/paplayer/PAPlayer.h b/xbmc/cores/paplayer/PAPlayer.h
+index e17ed00..ece4640 100644
+--- a/xbmc/cores/paplayer/PAPlayer.h
++++ b/xbmc/cores/paplayer/PAPlayer.h
+@@ -81,7 +81,7 @@ protected:
+ private:
+   typedef struct {
+     CAudioDecoder     m_decoder;             /* the stream decoder */
+-    unsigned int      m_channels;            /* number of channels in the stream */
++    CAEChannelInfo    m_channelInfo;         /* channel layout information */
+     unsigned int      m_sampleRate;          /* sample rate of the stream */
+     enum AEDataFormat m_dataFormat;          /* data format of the samples */
+     unsigned int      m_bytesPerSample;      /* number of bytes per audio sample */

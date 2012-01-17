@@ -1,0 +1,62 @@
+commit de552a82657119eec1da83be8c14b2e4a888560a
+Author: Geoffrey McRae <gnif@xbmc.org>
+Date:   Tue Jan 17 01:05:00 2012 +1100
+
+    [PAP] added GetChannelInfo to DVDPlayerCodec and enabled passthrough support
+
+diff --git a/xbmc/cores/paplayer/DVDPlayerCodec.cpp b/xbmc/cores/paplayer/DVDPlayerCodec.cpp
+index 7b9538e..cd12b3e 100644
+--- a/xbmc/cores/paplayer/DVDPlayerCodec.cpp
++++ b/xbmc/cores/paplayer/DVDPlayerCodec.cpp
+@@ -29,6 +29,7 @@
+ #include "cores/dvdplayer/DVDStreamInfo.h"
+ #include "cores/dvdplayer/DVDCodecs/DVDFactoryCodec.h"
+ #include "utils/log.h"
++#include "settings/GUISettings.h"
+ 
+ #include "AudioDecoder.h"
+ 
+@@ -131,7 +132,8 @@ bool DVDPlayerCodec::Init(const CStdString &strFile, unsigned int filecache)
+ 
+   CDVDStreamInfo hint(*pStream, true);
+ 
+-  m_pAudioCodec = CDVDFactoryCodec::CreateAudioCodec(hint, false);
++  bool passthrough = AUDIO_IS_BITSTREAM(g_guiSettings.GetInt("audiooutput.mode"));
++  m_pAudioCodec = CDVDFactoryCodec::CreateAudioCodec(hint, passthrough);
+   if (!m_pAudioCodec)
+   {
+     CLog::Log(LOGERROR, "%s: Could not create audio codec", __FUNCTION__);
+@@ -156,6 +158,7 @@ bool DVDPlayerCodec::Init(const CStdString &strFile, unsigned int filecache)
+     m_BitsPerSample = CAEUtil::DataFormatToBits(m_DataFormat);
+     m_SampleRate = m_pAudioCodec->GetSampleRate();
+     m_Channels = m_pAudioCodec->GetChannels();
++    m_ChannelInfo = m_pAudioCodec->GetChannelMap();
+ 
+   }
+   if (nErrors >= 10)
+@@ -303,3 +306,4 @@ bool DVDPlayerCodec::CanSeek()
+ {
+   return true;
+ }
++
+diff --git a/xbmc/cores/paplayer/DVDPlayerCodec.h b/xbmc/cores/paplayer/DVDPlayerCodec.h
+index c07ff01..4369ee5 100644
+--- a/xbmc/cores/paplayer/DVDPlayerCodec.h
++++ b/xbmc/cores/paplayer/DVDPlayerCodec.h
+@@ -40,6 +40,7 @@ public:
+   virtual int ReadPCM(BYTE *pBuffer, int size, int *actualsize);
+   virtual bool CanInit();
+   virtual bool CanSeek();
++  virtual CAEChannelInfo GetChannelInfo() {return m_ChannelInfo;}
+ 
+   void SetContentType(const CStdString &strContent);
+ 
+@@ -57,6 +58,8 @@ private:
+ 
+   BYTE *m_decoded;
+   int  m_nDecodedLen;
++
++  CAEChannelInfo m_ChannelInfo;
+ };
+ 
+ #endif

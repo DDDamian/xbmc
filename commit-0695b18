@@ -1,0 +1,73 @@
+commit 0695b186b9e7d45c18c04e4a9682f781d09cf98a
+Author: Geoffrey McRae <gnif@xbmc.org>
+Date:   Mon Jan 16 20:37:45 2012 +1100
+
+    [PAP] fixed seek backwards unsigned int wraparound bug
+    [PAP] added back start offset calc from original PAP code
+
+diff --git a/xbmc/cores/paplayer/PAPlayer.cpp b/xbmc/cores/paplayer/PAPlayer.cpp
+index f20f9a3..3b241bc 100644
+--- a/xbmc/cores/paplayer/PAPlayer.cpp
++++ b/xbmc/cores/paplayer/PAPlayer.cpp
+@@ -273,6 +273,7 @@ bool PAPlayer::QueueNextFileEx(const CFileItem &file, bool fadeIn/* = true */)
+   
+   /* init the streaminfo struct */
+   si->m_decoder.GetDataFormat(&si->m_channelInfo, &si->m_sampleRate, &si->m_dataFormat);
++  si->m_startOffset        = file.m_lStartOffset * 1000 / 75;
+   si->m_bytesPerSample     = CAEUtil::DataFormatToBits(si->m_dataFormat) >> 3;
+   si->m_samplesPerSecond   = si->m_sampleRate * si->m_channelInfo.Count();
+   si->m_started            = false;
+@@ -486,16 +487,17 @@ inline bool PAPlayer::ProcessStream(StreamInfo *si, float &delay, float &buffer)
+     return true;
+ 
+   /* see if it is time yet to seek */
+-  if (m_playbackSpeed != 1 && si->m_samplesSent >= si->m_seekNextAtSample) {
++  if (!si->m_playNextTriggered && m_playbackSpeed != 1 && si->m_samplesSent >= si->m_seekNextAtSample) {
+ 
+     si->m_samplesSent      += si->m_sampleRate  * (m_playbackSpeed  - 1);
+-    si->m_seekNextAtSample  = si->m_samplesSent + (si->m_sampleRate / 2);
+-    __int64 time            = (float)si->m_samplesSent / (float)si->m_samplesPerSecond * 1000.0f;
++    si->m_seekNextAtSample  = si->m_samplesSent + (si->m_samplesPerSecond / 2);
++    __int64 time            = si->m_startOffset + ((float)si->m_samplesSent / (float)si->m_samplesPerSecond * 1000.0f);
+ 
+     /* if we are seeking back before the start of the track start normal playback */
+-    if (time < 0) {
+-      time		= 0;
+-      si->m_samplesSent	= 0;
++    if (time < si->m_startOffset || si->m_samplesSent < 0) {
++      time		     = si->m_startOffset;
++      si->m_samplesSent	     = 0;
++      si->m_seekNextAtSample = 0;
+       ToFFRW(1);
+     }
+ 
+diff --git a/xbmc/cores/paplayer/PAPlayer.h b/xbmc/cores/paplayer/PAPlayer.h
+index ece4640..44a8d8a 100644
+--- a/xbmc/cores/paplayer/PAPlayer.h
++++ b/xbmc/cores/paplayer/PAPlayer.h
+@@ -81,6 +81,7 @@ protected:
+ private:
+   typedef struct {
+     CAudioDecoder     m_decoder;             /* the stream decoder */
++    __int64           m_startOffset;         /* the stream start offset */
+     CAEChannelInfo    m_channelInfo;         /* channel layout information */
+     unsigned int      m_sampleRate;          /* sample rate of the stream */
+     enum AEDataFormat m_dataFormat;          /* data format of the samples */
+@@ -89,13 +90,13 @@ private:
+     
+     bool              m_started;             /* if playback of this stream has been started */
+     bool              m_finishing;           /* if this stream is finishing */
+-    unsigned int      m_samplesSent;         /* number of frames sent to the stream */
+-    unsigned int      m_prepareNextAtSample; /* when to prepare the next stream */
++    int               m_samplesSent;         /* number of frames sent to the stream */
++    int               m_prepareNextAtSample; /* when to prepare the next stream */
+     bool              m_prepareTriggered;    /* if the next stream has been prepared */
+-    unsigned int      m_playNextAtSample;    /* when to start playing the next stream */
++    int               m_playNextAtSample;    /* when to start playing the next stream */
+     bool              m_playNextTriggered;   /* if this stream has started the next one */
+     bool              m_fadeOutTriggered;    /* if the stream has been told to fade out */
+-    unsigned int      m_seekNextAtSample;    /* the sample to seek at */
++    int               m_seekNextAtSample;    /* the sample to seek at */
+     
+     IAEStream*        m_stream;              /* the playback stream */
+     float             m_volume;              /* the initial volume level to set the stream to on creation */
