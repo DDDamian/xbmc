@@ -709,7 +709,7 @@ void CGUIWindowSettingsCategory::UpdateSettings()
     else if (strSetting.Equals("audiooutput.channellayout"))
     {
       //Speaker setting is irrelevant when using shared audio mode.
-      if(g_sysinfo.IsVistaOrHigher())
+      //if(g_sysinfo.IsVistaOrHigher())
       {
         CGUIControl *pControl = (CGUIControl *)GetControl(pSettingControl->GetID());
         pControl->SetEnabled(g_guiSettings.GetBool("audiooutput.useexclusivemode"));

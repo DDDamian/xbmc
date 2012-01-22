@@ -4746,7 +4746,7 @@ void CApplication::Process()
 
   // check if we can free unused memory
 #ifndef _LINUX
-  g_audioManager.FreeUnused();
+  //g_audioManager.FreeUnused();
 #endif
 
   // check how far we are through playing the current item
