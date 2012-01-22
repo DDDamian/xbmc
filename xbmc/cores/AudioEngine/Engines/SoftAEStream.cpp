@@ -31,7 +31,7 @@
 #include "SoftAE.h"
 #include "SoftAEStream.h"
 
-#define SOFTAE_FRAMES 1024
+#define SOFTAE_FRAMES 1024 //changed was 1024
 
 /* typecast AE to CSoftAE */
 #define AE (*((CSoftAE*)CAEFactory::AE))
@@ -72,6 +72,7 @@ CSoftAEStream::CSoftAEStream(enum AEDataFormat dataFormat, unsigned int sampleRa
 
 void CSoftAEStream::InitializeRemap()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   CSingleLock lock(m_critSection);
   if (!AE_IS_RAW(m_initDataFormat))
   {
@@ -94,6 +95,11 @@ void CSoftAEStream::InitializeRemap()
 
 void CSoftAEStream::Initialize()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
+  CLog::Log(LOGDEBUG, __FUNCTION__": Initial Data Format      = %s", CAEUtil::DataFormatToStr(m_initDataFormat));
+  CLog::Log(LOGDEBUG, __FUNCTION__": Initial Sample Rate      = %d", m_initSampleRate);
+  CLog::Log(LOGDEBUG, __FUNCTION__": Initial Channel Count    = %d", m_chLayoutCount);
+  CLog::Log(LOGDEBUG, __FUNCTION__": Initial Channel Layout   = %s", ((CStdString)m_initChannelLayout).c_str());
   CSingleLock lock(m_critSection);
   if (m_valid)
   {
@@ -173,7 +179,7 @@ void CSoftAEStream::Initialize()
   if (m_convert)
   {
     /* get the conversion function and allocate a buffer for the data */
-    CLog::Log(LOGDEBUG, "CSoftAEStream::CSoftAEStream - Converting from %s to AE_FMT_FLOAT", CAEUtil::DataFormatToStr(m_initDataFormat));
+    CLog::Log(LOGDEBUG, __FUNCTION__" - Converting from %s to AE_FMT_FLOAT", CAEUtil::DataFormatToStr(m_initDataFormat));
     m_convertFn = CAEConvert::ToFloat(m_initDataFormat);
     if (m_convertFn) m_convertBuffer = (float*)_aligned_malloc(m_format.m_frameSamples * sizeof(float), 16);
     else             m_valid         = false;
@@ -185,7 +191,7 @@ void CSoftAEStream::Initialize()
   if (m_resample)
   {
     int err;
-    m_ssrc                   = src_new(SRC_SINC_MEDIUM_QUALITY, m_initChannelLayout.Count(), &err);
+    m_ssrc                   = src_new(SRC_SINC_BEST_QUALITY, m_initChannelLayout.Count(), &err);
     m_ssrcData.data_in       = m_convertBuffer;
     m_internalRatio          = (double)AE.GetSampleRate() / (double)m_initSampleRate;
     m_ssrcData.src_ratio     = m_internalRatio;

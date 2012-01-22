@@ -54,13 +54,14 @@ struct sampleFormat
   GUID subFormat;
   unsigned int bitsPerSample;
   unsigned int validBitsPerSample;
+  AEDataFormat subFormatType;
 };
 
 //Sample formats go from float -> 32 bit int -> 24 bit int (packed in 32) -> 16 bit int 
-static const sampleFormat testFormats[] = { {KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32},
-                                            {KSDATAFORMAT_SUBTYPE_PCM, 32, 32},
-                                            {KSDATAFORMAT_SUBTYPE_PCM, 32, 24},
-                                            {KSDATAFORMAT_SUBTYPE_PCM, 16, 16} }; 
+static const sampleFormat testFormats[] = { {KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, AE_FMT_FLOAT},
+                                            {KSDATAFORMAT_SUBTYPE_PCM, 32, 32, AE_FMT_S32NE},
+                                            {KSDATAFORMAT_SUBTYPE_PCM, 32, 24, AE_FMT_S24NE4},
+                                            {KSDATAFORMAT_SUBTYPE_PCM, 16, 16, AE_FMT_S16NE} }; 
 
 #define EXIT_ON_FAILURE(hr, reason, ...) if(FAILED(hr)) {CLog::Log(LOGERROR, reason, __VA_ARGS__); goto failed;}
 
@@ -89,6 +90,7 @@ CAESinkWASAPI::~CAESinkWASAPI()
 
 bool CAESinkWASAPI::Initialize(AEAudioFormat &format, CStdString &device)
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Initializing sink - check for Exclusive or Shared mode");
   CSingleLock lock(m_runLock);
 
   if(m_initialized) return false;
@@ -226,38 +228,49 @@ void CAESinkWASAPI::Deinitialize()
 
 bool CAESinkWASAPI::IsCompatible(const AEAudioFormat format, const CStdString device)
 {
-  CSingleLock lock(m_runLock);
-  if(!m_initialized) return false;
+	CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
+	CSingleLock lock(m_runLock);
+	if(!m_initialized) return false;
 
-  bool excSetting = g_guiSettings.GetBool("audiooutput.useexclusivemode");
+	bool excSetting = g_guiSettings.GetBool("audiooutput.useexclusivemode");
 
-  //Shared mode has one mix format used to open the device and is set by Windows.
-  //Don't change unless we are switching to passthrough or changing output modes. 
-  if(!m_isExclusive && excSetting ==  m_isExclusive && !AE_IS_RAW(format.m_dataFormat))
-    return true;
+	//Shared mode has one mix format used to open the device and is set by Windows.
+	//Don't change unless we are switching to passthrough or changing output modes.
+	CLog::Log(LOGDEBUG, __FUNCTION__": Comparing Channel Layouts Current :  %d", m_format.m_channelLayout.Count());
+	CLog::Log(LOGDEBUG, __FUNCTION__": Comparing Channel Layouts Target  :  %d", format.m_channelLayout.Count());
 
-  if(m_device      == device     && //Same device
-     m_isExclusive == excSetting && //No change in exclusive vs shared mode
+	if(!m_isExclusive && excSetting &&  m_isExclusive && !AE_IS_RAW(format.m_dataFormat))
+		return true;
 
-     AE_IS_RAW(m_encodedFormat) == AE_IS_RAW(format.m_dataFormat)  && //No change from PCM to RAW or vice versa
+	if(m_device      == device     && //Same device
+		m_isExclusive == excSetting && //No change in exclusive vs shared mode
 
-     //If the current and target formats are raw and match...
-     ((AE_IS_RAW(format.m_dataFormat) && AE_IS_RAW(m_encodedFormat) && 
-     format.m_dataFormat            == m_encodedFormat     &&
-     format.m_sampleRate            == m_encodedSampleRate &&
-     format.m_channelLayout.Count() == m_encodedChannels)  ||
-     
-     //Or the current and target formats are both PCM and match...
-     (!AE_IS_RAW(format.m_dataFormat) && !AE_IS_RAW(m_format.m_dataFormat) &&
-     m_format.m_sampleRate    == format.m_sampleRate   && 
-     m_format.m_channelLayout == format.m_channelLayout)))
-     return true; //We can reuse the existing sink.
+		AE_IS_RAW(m_encodedFormat) == AE_IS_RAW(format.m_dataFormat)  && //No change from PCM to RAW or vice versa
 
-  return false;
+		//If the current and target formats are raw and match...
+		((AE_IS_RAW(format.m_dataFormat) && AE_IS_RAW(m_encodedFormat) && 
+		format.m_dataFormat            == m_encodedFormat     &&
+		format.m_sampleRate            == m_encodedSampleRate &&
+		format.m_channelLayout.Count() == m_encodedChannels)  ||
+
+		//Or the current and target formats are both PCM and match...
+		(!AE_IS_RAW(format.m_dataFormat) && !AE_IS_RAW(m_format.m_dataFormat) &&
+		m_format.m_sampleRate    == format.m_sampleRate   && 
+		m_format.m_channelLayout == format.m_channelLayout)))
+	{
+		CLog::Log(LOGDEBUG, __FUNCTION__": Formats compatible - reusing sink");
+		return true; //We can reuse the existing sink.
+	}
+	else
+	{
+		CLog::Log(LOGDEBUG, __FUNCTION__": Formats incompatible - need new sink");
+		return false;
+	}
 }
 
 void CAESinkWASAPI::Stop()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   CSingleLock lock(m_runLock);
   if(!m_initialized) return;
 
@@ -558,11 +571,43 @@ bool CAESinkWASAPI::InitializeExclusive(AEAudioFormat &format)
     BuildWaveFormatExtensible(format, wfxex);
   else
     BuildWaveFormatExtensibleIEC61397(format, wfxex_iec61937);
+  
+  //test for incomplete or startup format and provide default
+  if(format.m_sampleRate == 0 ||
+	  format.m_channelLayout == NULL ||
+	  format.m_dataFormat == AE_FMT_INVALID ||
+	  format.m_channelLayout.Count() == 0)
+  {
+	  wfxex.Format.wFormatTag           = WAVE_FORMAT_EXTENSIBLE;
+	  wfxex.Format.nChannels            = 2;
+	  wfxex.Format.nSamplesPerSec       = 44100;
+	  wfxex.Format.wBitsPerSample       = 16;
+	  wfxex.Format.nBlockAlign          = 4;
+	  wfxex.Samples.wValidBitsPerSample = 16;
+	  wfxex.Format.cbSize               = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+	  wfxex.Format.nAvgBytesPerSec      = wfxex.Format.nBlockAlign * wfxex.Format.nSamplesPerSec;
+	  wfxex.dwChannelMask               = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+	  wfxex.SubFormat                   = KSDATAFORMAT_SUBTYPE_PCM;
+  }
+
+  CLog::Log(LOGDEBUG, __FUNCTION__": Checking IsFormatSupported with the following parameters:");
+  CLog::Log(LOGDEBUG, "  Sample Rate    : %d", wfxex.Format.nSamplesPerSec);
+  CLog::Log(LOGDEBUG, "  Sample Format  : %s", "WAVE_FORMAT_EXTENSIBLE");
+  CLog::Log(LOGDEBUG, "  Bits Per Sample: %d", wfxex.Format.wBitsPerSample);
+  CLog::Log(LOGDEBUG, "  Valid Bits/Samp: %d", wfxex.Samples.wValidBitsPerSample);
+  CLog::Log(LOGDEBUG, "  Channel Count  : %d", wfxex.Format.nChannels);
+  CLog::Log(LOGDEBUG, "  Block Align    : %d", wfxex.Format.nBlockAlign);
+  CLog::Log(LOGDEBUG, "  Avg. Bytes Sec : %d", wfxex.Format.nAvgBytesPerSec);
+  CLog::Log(LOGDEBUG, "  Samples/Block  : %d", wfxex.Samples.wSamplesPerBlock);
+  CLog::Log(LOGDEBUG, "  Channel Layout : %s", ((CStdString)format.m_channelLayout).c_str());
 
   HRESULT hr = m_pAudioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wfxex.Format, NULL);
 
   if(SUCCEEDED(hr))
+  {
+	CLog::Log(LOGDEBUG, __FUNCTION__": Format is Supported - will attempt to Initialize");
     goto initialize;
+  }
   else if(hr != AUDCLNT_E_UNSUPPORTED_FORMAT) //It failed for a reason unrelated to an unsupported format.
   {
     CLog::Log(LOGERROR, __FUNCTION__": IsFormatSupported failed (%s)", WASAPIErrToStr(hr));
@@ -570,6 +615,8 @@ bool CAESinkWASAPI::InitializeExclusive(AEAudioFormat &format)
   }
   else if(AE_IS_RAW(format.m_dataFormat)) //No sense in trying other formats for passthrough.
     return false;
+
+  CLog::Log(LOGERROR, __FUNCTION__": IsFormatSupported failed (%s) - trying to find a compatible format", WASAPIErrToStr(hr));
 
   int closestMatch;
 
@@ -579,7 +626,7 @@ bool CAESinkWASAPI::InitializeExclusive(AEAudioFormat &format)
   {
     closestMatch = -1;
 
-    wfxex.SubFormat                   = testFormats[j].subFormat;
+	wfxex.SubFormat                   = testFormats[j].subFormat;
     wfxex.Format.wBitsPerSample       = testFormats[j].bitsPerSample;
     wfxex.Samples.wValidBitsPerSample = testFormats[j].validBitsPerSample;
     wfxex.Format.nBlockAlign          = wfxex.Format.nChannels * (wfxex.Format.wBitsPerSample >> 3);
@@ -588,6 +635,11 @@ bool CAESinkWASAPI::InitializeExclusive(AEAudioFormat &format)
     {
       wfxex.Format.nSamplesPerSec    = WASAPISampleRates[i];
       wfxex.Format.nAvgBytesPerSec   = wfxex.Format.nSamplesPerSec * wfxex.Format.nBlockAlign;
+
+	  CLog::Log(LOGDEBUG, "WASAPI: Trying Sample Format    : %s", CAEUtil::DataFormatToStr(testFormats[j].subFormatType));
+	  CLog::Log(LOGDEBUG, "WASAPI: Trying Sample Rate      : %d", wfxex.Format.nSamplesPerSec);
+	  CLog::Log(LOGDEBUG, "WASAPI: Trying Bits/Sample      : %d", wfxex.Format.wBitsPerSample);
+	  CLog::Log(LOGDEBUG, "WASAPI: Trying Valid Bits/Sample: %d", wfxex.Samples.wValidBitsPerSample);
 
       hr = m_pAudioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wfxex.Format, NULL);
 
@@ -651,9 +703,9 @@ initialize:
   
   //The default periods of some devices are VERY low (less than 3ms).
   //For audio stability make sure we have at least an 8ms buffer.
-  if(hnsPeriodicity < 80000) hnsPeriodicity = 80000;
+  if(hnsPeriodicity < 30000) hnsPeriodicity = 30000;
 
-  hnsRequestedDuration = hnsPeriodicity * 8;
+  hnsRequestedDuration = hnsPeriodicity * 1;
 
   CLog::Log(LOGDEBUG, __FUNCTION__": Initializing WASAPI exclusive mode with the following parameters:");
   CLog::Log(LOGDEBUG, "  Sample Rate   : %d", format.m_sampleRate);
@@ -668,7 +720,7 @@ initialize:
     CLog::Log(LOGERROR, __FUNCTION__": Unable to initialize WASAPI in exclusive mode (%s).", WASAPIErrToStr(hr));
     return false;
   }
-
+  CLog::Log(LOGDEBUG, __FUNCTION__": WASAPI Sink Initialized Successfully!!!");
   return true;
 }
 

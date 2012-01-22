@@ -97,14 +97,16 @@ CSoftAE::~CSoftAE()
 
 IAESink *CSoftAE::GetSink(AEAudioFormat &newFormat, bool passthrough, CStdString &device)
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   device = passthrough ? m_passthroughDevice : m_device;
   IAESink *sink = CAESinkFactory::Create(device, newFormat, passthrough);
   return sink;
 }
 
-bool CSoftAE::OpenSink()
+bool CSoftAE::OpenSink(AEAudioFormat &newFormat)
 {
   /* save off our raw/passthrough mode for checking */
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   bool wasTranscode           = m_transcode;
   bool wasRawPassthrough      = m_rawPassthrough;
   bool reInit                 = false;
@@ -142,10 +144,10 @@ bool CSoftAE::OpenSink()
     masterStream = m_preferSeemless ? m_streams.front() : m_streams.back();
 
   /* the desired format */
-  AEAudioFormat newFormat;
+ // AEAudioFormat newFormat;
 
   /* override the sample rate & channel layout based on the master stream if there is one */
-  if (masterStream)
+  if (masterStream && !g_guiSettings.GetBool("audiooutput.useexclusivemode"))
   {
     newFormat.m_sampleRate    = masterStream->GetSampleRate();
     newFormat.m_channelLayout = masterStream->m_initChannelLayout;    
@@ -155,8 +157,8 @@ bool CSoftAE::OpenSink()
   }
   else
   {
-    newFormat.m_sampleRate    = 44100;
-    newFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+    //newFormat.m_sampleRate    = 44100;
+    //newFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
   }
 
   streamLock.Leave();
@@ -201,7 +203,8 @@ bool CSoftAE::OpenSink()
   if (!m_sink || ((CStdString)m_sink->GetName()).ToUpper() != driver || !m_sink->IsCompatible(newFormat, device))
   {
     /* let the thread know we have re-opened the sink */
-    m_reOpened = true;
+    CLog::Log(LOGINFO, "CSoftAE::OpenSink - Sinks not compatible - opening new sink %s", m_sink ? m_sink->GetName() : "NULL");
+	m_reOpened = true;
     reInit = true;
     
     /* we are going to open, so close the old sink if it was open */
@@ -347,6 +350,7 @@ bool CSoftAE::OpenSink()
 
 void CSoftAE::ResetEncoder()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   if (m_encoder)
     m_encoder->Reset();
 
@@ -360,6 +364,7 @@ void CSoftAE::ResetEncoder()
 
 bool CSoftAE::SetupEncoder(AEAudioFormat &format)
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   ResetEncoder();
   delete m_encoder;
   m_encoder = NULL;
@@ -383,11 +388,17 @@ void CSoftAE::Shutdown()
 
 bool CSoftAE::Initialize()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   /* get the current volume level */
   m_volume = g_settings.m_fVolumeLevel;
 
   /* we start even if we failed to open a sink */
-  OpenSink();
+  AEAudioFormat initialFormat;
+  initialFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+  initialFormat.m_dataFormat = AE_FMT_S16NE;
+  initialFormat.m_sampleRate = 44100;
+  OpenSink(initialFormat);
+
   m_running = true;
   m_thread  = new CThread(this);
   m_thread->Create();
@@ -397,6 +408,7 @@ bool CSoftAE::Initialize()
 
 void CSoftAE::OnSettingsChange(CStdString setting)
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   if (setting == "audiooutput.dontnormalizelevels")
   {
     /* re-init streams reampper */
@@ -416,13 +428,19 @@ void CSoftAE::OnSettingsChange(CStdString setting)
       setting == "audiooutput.useexclusivemode"  ||
       setting == "audiooutput.multichannellpcm")
   {
-    OpenSink();
+    
+  AEAudioFormat initialFormat;
+  initialFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+  initialFormat.m_dataFormat = AE_FMT_S16NE;
+  initialFormat.m_sampleRate = 44100;
+  OpenSink(initialFormat);
   }
 }
 
 void CSoftAE::LoadSettings()
 {
   /* load the configuration */
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   m_stdChLayout = AE_CH_LAYOUT_2_0;
   switch(g_guiSettings.GetInt("audiooutput.channellayout"))
   {
@@ -532,6 +550,7 @@ void CSoftAE::DelayFrames()
 
 void CSoftAE::Stop()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   m_running = false;
 
   /* wait for the thread to stop */
@@ -554,9 +573,21 @@ IAEStream *CSoftAE::MakeStream(enum AEDataFormat dataFormat, unsigned int sample
   streamLock.Leave();
 
   if (AE_IS_RAW(dataFormat))
-    OpenSink();
-  else if (wasEmpty || !m_preferSeemless)
-    OpenSink();
+  {
+	  AEAudioFormat newFormat;
+      newFormat.m_channelLayout = channelLayout;
+      newFormat.m_dataFormat = dataFormat;
+      newFormat.m_sampleRate = sampleRate;
+      OpenSink(newFormat);
+  }
+  else if (wasEmpty || !m_preferSeemless || g_guiSettings.GetBool("audiooutput.useexclusivemode"))
+  {
+	  AEAudioFormat newFormat;
+      newFormat.m_channelLayout = channelLayout;
+      newFormat.m_dataFormat = dataFormat;
+      newFormat.m_sampleRate = sampleRate;
+      OpenSink(newFormat);
+  }
 
   /* if the stream was not initialized, do it now */
   if (!stream->IsValid())
@@ -655,7 +686,11 @@ IAEStream *CSoftAE::FreeStream(IAEStream *stream)
   if (m_streams.empty() && (m_chLayout.Count() <= 1 || (m_rawPassthrough && !m_transcode)))
   {
      lock.Leave();
-     OpenSink();
+	 AEAudioFormat initialFormat;
+     initialFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+     initialFormat.m_dataFormat = AE_FMT_S16NE;
+     initialFormat.m_sampleRate = 44100;
+     OpenSink(initialFormat);
   }
 
   return NULL;
@@ -707,6 +742,7 @@ void CSoftAE::StopAllSounds()
 
 void CSoftAE::Run()
 {
+  CLog::Log(LOGDEBUG, __FUNCTION__": Trace");
   /* we release this when we exit the thread unblocking anyone waiting on "Stop" */
   CSingleLock runningLock(m_runningLock);
 
@@ -750,7 +786,11 @@ void CSoftAE::Run()
     /* if we are told to restart */
     if (restart)
     {
-      OpenSink();
+       AEAudioFormat initialFormat;
+       initialFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+       initialFormat.m_dataFormat = AE_FMT_S16NE;
+       initialFormat.m_sampleRate = 44100;
+       OpenSink(initialFormat);
     }
     else
     {

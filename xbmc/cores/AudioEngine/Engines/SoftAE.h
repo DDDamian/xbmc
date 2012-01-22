@@ -102,7 +102,7 @@ private:
   CThread *m_thread;
 
   void LoadSettings();
-  bool OpenSink();
+  bool OpenSink(AEAudioFormat &format);
   void ResetEncoder();
   bool SetupEncoder(AEAudioFormat &format);
   void Deinitialize();

@@ -93,7 +93,7 @@ IAESink *CAESinkFactory::Create(CStdString &device, AEAudioFormat &desiredFormat
 
 #ifdef _WIN32
 
-  if ((driver.IsEmpty() && g_sysinfo.IsVistaOrHigher() && !g_advancedSettings.m_audioForceDirectSound) || driver == "WASAPI")
+  //if ((driver.IsEmpty() && g_sysinfo.IsVistaOrHigher() && !g_advancedSettings.m_audioForceDirectSound) || driver == "WASAPI")
     TRY_SINK(WASAPI)
     
   if (driver.IsEmpty() || driver == "DIRECTSOUND")
@@ -130,10 +130,10 @@ void CAESinkFactory::Enumerate(AEDeviceList &devices, bool passthrough)
 {
 #ifdef _WIN32
 
-  if(g_sysinfo.IsVistaOrHigher() && !g_advancedSettings.m_audioForceDirectSound)
+  //if(g_sysinfo.IsVistaOrHigher() && !g_advancedSettings.m_audioForceDirectSound)
     CAESinkWASAPI::EnumerateDevices(devices, passthrough);
-  else
-    CAESinkDirectSound::EnumerateDevices(devices, passthrough);
+  //else
+    //CAESinkDirectSound::EnumerateDevices(devices, passthrough);
     
 #elif defined _LINUX && !defined __APPLE__
 
