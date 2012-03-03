@@ -2219,6 +2219,6 @@
 <string id="36015">Número da porta HDMI</string>
 <string id="36016">Conectado</string> 
 <!-- max. 13 characters -->
- <string id="36017">Adaptador encontrado, mas libcec não esta disponível</string>
+<string id="36017">Adaptador encontrado, mas libcec não esta disponível</string>
 <string id="36018">Usar os ajustes de linguagem da TV</string>
 </strings>
