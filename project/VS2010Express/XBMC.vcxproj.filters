@@ -2478,6 +2478,9 @@
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp">
       <Filter>cores\AudioEngine\DSP</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.cpp">
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\xbmc\XbmcContext.cpp" />
     <ClCompile Include="..\..\xbmc\utils\POUtils.cpp">
       <Filter>utils</Filter>
@@ -5060,6 +5063,12 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h">
       <Filter>cores\AudioEngine\DSP</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.h">
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClInclude>
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.h">
     <ClInclude Include="..\..\xbmc\threads\platform\win\Implementation.cpp" />
     <ClInclude Include="..\..\xbmc\filesystem\FileUPnP.h" />
     <ClInclude Include="..\..\xbmc\network\ZeroconfBrowser.h">
