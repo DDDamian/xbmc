@@ -273,7 +273,7 @@ bool CAEWAVLoader::Remap(CAEChannelInfo to, enum AEStdChLayout stdChLayout/* = A
   };
 
   CAERemap remap;
-  if (!remap.Initialize(layouts[m_channelCount - 1], to, false, false, stdChLayout))
+  if (!remap.Initialize(layouts[m_channelCount - 1], to, false, m_sampleRate, false, stdChLayout))
     return false;
 
   float *remapped = (float*)_aligned_malloc(sizeof(float) * m_frameCount * to.Count(), 16);
