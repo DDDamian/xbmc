@@ -110,11 +110,13 @@ class CAdvancedSettings
     /* DSP Settings        */
     /*---------------------*/
     /* DSP: HeadphonesHRTF */
+    bool        dspHRTFEnabled;
     CStdString  dspHRTFModel;
     int         dspHRTFCutFreq;
     double      dspHRTFFeedLvl;
     double      dspHRTFGain;
     /* DSP: DRCompressor   */
+    bool        dspDRCEnabled;
     float       dspDRCThreshold;
     float       dspDRCGain;
     float       dspDRCAttackTime;
@@ -125,6 +127,8 @@ class CAdvancedSettings
     bool        dspDRCAutoAttack;
     bool        dspDRCAutoRelease;
     bool        dspDRCAutoKnee;
+    /* DSP: LPFilter   */
+    bool        dspLPFilterEnabled;
 
     float m_videoSubsDelayRange;
     float m_videoAudioDelayRange;
