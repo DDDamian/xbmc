@@ -77,7 +77,7 @@ void CAdvancedSettings::Initialize()
   dspDRCAutoRelease  =  true;
   dspDRCAutoKnee     =  true;
   /* DSP: LPFilter   */
-  dspLPFilter = false;
+  dspLPFilterEnabled = false;
 
   //default hold time of 25 ms, this allows a 20 hertz sine to pass undistorted
   m_limiterHold = 0.025f;
