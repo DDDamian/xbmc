@@ -340,17 +340,6 @@ void CSoftAE::InternalOpenSink()
       m_dspList.pop_back();
       delete dsp;
     }
-
-    if (!m_rawPassthrough)
-    {
-      /* install the HeadphonesHRTF DSP */
-      IAEDSP *dsp;
-      dsp = new CAEDSPDRCompressor();
-      if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
-        m_dspList.push_back(dsp);
-      else
-        delete dsp;
-    }
   }
   else
     CLog::Log(LOGINFO, "CSoftAE::InternalOpenSink - keeping old sink with : %s, %s, %dhz",
@@ -418,6 +407,57 @@ void CSoftAE::InternalOpenSink()
 
   if (m_buffer.Size() < neededBufferSize)
     m_buffer.Alloc(neededBufferSize);
+
+  /* Load and initialize any DSP's */
+  if (!m_rawPassthrough && m_masterStream) //TODO: A more elegant method here
+  {
+    /* install the HeadphonesHRTF DSP */
+    IAEDSP *dsp;
+    if (g_advancedSettings.dspHRTFEnabled)
+    {
+      dsp = new CAEDSPHeadphonesHRTF();
+      if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CSoftAE::Initialize - Loaded DSP HeadphonesHRTF");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CSoftAE::Initialize - Failed to initialize DSP HeadphonesHRTF");
+      }
+    }
+    /* install the DRCompressor DSP */
+    if (m_masterStream->HasVideo() && g_advancedSettings.dspDRCEnabled)
+    {
+      dsp = new CAEDSPDRCompressor();
+      if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CSoftAE::Initialize - Loaded DSP Dynamic Range Compressor");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CSoftAE::Initialize - Failed to initialize DSP Dynamic Range Compressor");
+      }
+    }
+    /* install the LPFilter DSP */
+    if (g_advancedSettings.dspLPFilterEnabled)
+    {
+      dsp = new CAEDSPLowPassFilter();
+      if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CSoftAE::Initialize - Loaded DSP Low Pass Filter");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CSoftAE::Initialize - Failed to initialize DSP Low Pass Filter");
+      }
+    }
+  }
 
   if (reInit)
   {
