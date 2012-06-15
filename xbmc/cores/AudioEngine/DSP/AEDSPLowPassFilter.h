@@ -96,6 +96,6 @@ private:
   unsigned int     m_returnSamples; /* store number of samples for GetOutput() */
   unsigned int     m_channelCount;  /* number of channels passed by engine */
   unsigned int     m_lfeChannel;    /* channel number of the lfe channel */
-
+  float            m_cutoffFreq;    /* cutoff frequency from 20.0 - 200.0hz */
 };
 

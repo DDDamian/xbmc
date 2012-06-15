@@ -78,6 +78,7 @@ void CAdvancedSettings::Initialize()
   dspDRCAutoKnee     =  true;
   /* DSP: LPFilter   */
   dspLPFilterEnabled = false;
+  dspLPFilterCutoff  = 120.0f;
 
   //default hold time of 25 ms, this allows a 20 hertz sine to pass undistorted
   m_limiterHold = 0.025f;
@@ -435,6 +436,7 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
     XMLUtils::GetBoolean(pElement, "dspDRCEnabled",     dspDRCEnabled);
     /* DSP: LPFilter */
     XMLUtils::GetBoolean(pElement, "dspLPFilterEnabled", dspLPFilterEnabled);
+    XMLUtils::GetFloat(pElement,   "dspLPFilterCutoff",  dspLPFilterCutoff, 20.0f, 200.0f);
   }
 
   pElement = pRootElement->FirstChildElement("karaoke");

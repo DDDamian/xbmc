@@ -21,6 +21,7 @@
  */
 
 #include "AEDSPLowPassFilter.h"
+#include "settings/AdvancedSettings.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -28,9 +29,10 @@
 #include "utils/log.h"
 
 CAEDSPLowPassFilter::CAEDSPLowPassFilter() :
-  m_returnBuffer  (NULL ),
-  m_returnSamples (0    ),
-  m_iir             (&m_iirF)
+  m_returnBuffer  (NULL  ),
+  m_returnSamples (0     ),
+  m_cutoffFreq    (120.0f),
+  m_iir           (&m_iirF)
 {
   memset(&m_iirF, 0, sizeof(m_iirF));
 }
@@ -60,6 +62,12 @@ bool CAEDSPLowPassFilter::Initialize(const CAEChannelInfo& channels, const unsig
 
   /* Store number of channels for Process() */
   m_channelCount = channels.Count();
+
+  /* Get user-supplied cutoff frequency 20.0 - 200.0hz */
+  m_cutoffFreq = g_advancedSettings.dspLPFilterCutoff;
+
+  if (m_cutoffFreq < 20.0f || m_cutoffFreq > 200.0f)
+    m_cutoffFreq = 120.0f;
 
   /* Check that we have an LFE channel and get its number */
   m_lfeChannel = 0;
@@ -100,7 +108,7 @@ bool CAEDSPLowPassFilter::Initialize(const CAEChannelInfo& channels, const unsig
   coef = m_iir->coef + 1; /* Skip k, or gain */
 
   Q = 1;                /* Resonance */
-  fc = 140;             /* Filter cutoff (Hz) */
+  fc = m_cutoffFreq;    /* Filter cutoff (Hz) */
   fs = sampleRate;      /* Sampling frequency (Hz) */
 
   /* Compute z-domain coefficients for each biquad section

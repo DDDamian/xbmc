@@ -129,6 +129,7 @@ class CAdvancedSettings
     bool        dspDRCAutoKnee;
     /* DSP: LPFilter   */
     bool        dspLPFilterEnabled;
+    float       dspLPFilterCutoff;
 
     float m_videoSubsDelayRange;
     float m_videoAudioDelayRange;
