@@ -2692,6 +2692,7 @@ bool CDVDPlayer::OpenAudioStream(int iStream, int source)
   m_CurrentAudio.hint = hint;
   m_CurrentAudio.stream = (void*)pStream;
   m_CurrentAudio.started = false;
+  m_CurrentAudio.hasVideo = HasVideo();
 
   /* we are potentially going to be waiting on this */
   m_dvdPlayerAudio.SendMessage(new CDVDMsg(CDVDMsg::PLAYER_STARTED), 1);

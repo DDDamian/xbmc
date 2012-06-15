@@ -30,7 +30,8 @@
 enum AEStreamOptions {
   AESTREAM_FORCE_RESAMPLE = 0x01, /* force resample even if rates match */
   AESTREAM_PAUSED         = 0x02, /* create the stream paused */
-  AESTREAM_AUTOSTART      = 0x04  /* autostart the stream when enough data is buffered */
+  AESTREAM_AUTOSTART      = 0x04, /* autostart the stream when enough data is buffered */
+  AESTREAM_HASVIDEO       = 0X08  /* set if stream is part of a video */
 };
 
 /**
@@ -207,6 +208,11 @@ public:
    * @return true if a fade is in progress, otherwise false
    */
   virtual bool IsFading() { return false; }
+
+  /**
+   * Returns true if stream is part of a video
+   */
+  virtual bool HasVideo() { return false; }
 
   /**
    * Slave a stream to resume when this stream has drained

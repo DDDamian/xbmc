@@ -52,6 +52,7 @@ CSoftAERAWStream::CSoftAERAWStream(enum AEDataFormat dataFormat, unsigned int sa
   m_chLayoutCount         = channelLayout.Count();
   m_paused                = (options & AESTREAM_PAUSED) != 0;
   m_autoStart             = (options & AESTREAM_AUTOSTART) != 0;
+  m_hasVideo              = (options & AESTREAM_HASVIDEO) != 0;
 
   if (m_autoStart)
     m_paused = true;

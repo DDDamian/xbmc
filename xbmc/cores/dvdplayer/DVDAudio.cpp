@@ -54,7 +54,7 @@ CDVDAudio::~CDVDAudio()
   free(m_pBuffer);
 }
 
-bool CDVDAudio::Create(const DVDAudioFrame &audioframe, CodecID codec, bool needresampler)
+bool CDVDAudio::Create(const DVDAudioFrame &audioframe, CodecID codec, bool needresampler, bool hasVideo)
 {
   CLog::Log(LOGNOTICE,
     "Creating audio stream (codec id: %i, channels: %i, sample rate: %i, %s)",
@@ -68,6 +68,8 @@ bool CDVDAudio::Create(const DVDAudioFrame &audioframe, CodecID codec, bool need
   CSingleLock lock(m_critSection);
   unsigned int options = needresampler && !audioframe.passthrough ? AESTREAM_FORCE_RESAMPLE : 0;
   options |= AESTREAM_AUTOSTART;
+  if (hasVideo)
+    options |= AESTREAM_HASVIDEO;
 
   m_pAudioStream = CAEFactory::AE->MakeStream(
     audioframe.data_format,

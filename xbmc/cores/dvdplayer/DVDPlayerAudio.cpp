@@ -599,7 +599,7 @@ void CDVDPlayerAudio::Process()
       else
         m_dvdAudio.Pause();
 
-      if(!m_dvdAudio.Create(audioframe, m_streaminfo.codec, m_setsynctype == SYNC_RESAMPLE))
+      if(!m_dvdAudio.Create(audioframe, m_streaminfo.codec, m_setsynctype == SYNC_RESAMPLE, m_hasVideo))
         CLog::Log(LOGERROR, "%s - failed to create audio renderer", __FUNCTION__);
     }
 

@@ -65,6 +65,7 @@ public:
   void*            stream; // pointer or integer, identifying stream playing. if it changes stream changed
   bool             inited;
   bool             started; // has the player started
+  bool             hasVideo; // has video, used for AE DSP selection
   const StreamType type;
   const int        player;
   // stuff to handle starting after seek

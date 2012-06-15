@@ -45,6 +45,7 @@ protected:
   virtual void SetPaused  (const bool paused) = 0;
   virtual bool IsDestroyed() = 0;
   virtual bool IsValid    () = 0;
+  virtual bool HasVideo   () = 0;
   virtual const bool IsRaw() const = 0;
   virtual const CAEChannelInfo& GetChannelLayout() const = 0;
 

@@ -85,6 +85,7 @@ public:
 
   virtual void              FadeVolume(float from, float to, unsigned int time) {}
   virtual bool              IsFading() { return false; }
+  virtual bool              HasVideo() {return m_hasVideo; }
   virtual void              RegisterSlave(IAEStream *stream);
 private:
   void InternalFlush();
@@ -117,6 +118,7 @@ private:
   uint8_t              *m_packetPos;
   bool                  m_paused;
   bool                  m_autoStart;
+  bool                  m_hasVideo;
   bool                  m_draining;
 };
 

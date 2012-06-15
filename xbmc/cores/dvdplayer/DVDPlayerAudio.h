@@ -185,6 +185,7 @@ protected:
   bool    m_started;
   double  m_duration; // last packets duration
   bool    m_silence;
+  bool    m_hasVideo;
 
   bool OutputPacket(DVDAudioFrame &audioframe);
 
