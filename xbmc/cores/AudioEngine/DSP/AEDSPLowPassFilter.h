@@ -36,7 +36,7 @@
 /**
  * CAEDSPLowPassFilter - A fourth-order (24db/octave) Butterworth low-pass resonant filter
  */
-class CAEDSPLowPassFilter
+class CAEDSPLowPassFilter : public IAEDSP
 {
 public:
   CAEDSPLowPassFilter();
