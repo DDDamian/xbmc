@@ -73,6 +73,20 @@ public:
   virtual bool SkipNext();
 
   static bool HandlesType(const CStdString &type);
+
+  struct
+  {
+    CStdString   m_codec;
+    int64_t      m_time;
+    int64_t      m_totalTime;
+    int          m_channelCount;
+    int          m_bitsPerSample;
+    int          m_sampleRate;
+    int          m_audioBitrate;
+    int          m_cacheLevel;
+    bool         m_canSeek;
+  } m_playerGUIData;
+
 protected:
   virtual void OnStartup() {}
   virtual void Process();
@@ -134,6 +148,8 @@ private:
   bool ProcessStream(StreamInfo *si, double &delay, double &buffer);
   bool QueueData(StreamInfo *si);
   void UpdateCrossFadingTime(const CFileItem& file);
+  void UpdateGUIData(StreamInfo *si);
   int64_t GetTotalTime64();
+  int64_t GetTimeInternal();
 };
 
