@@ -326,6 +326,10 @@
 		C8EC5D0E1369519D00CCC10D /* XBMC_keytable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8EC5D0C1369519D00CCC10D /* XBMC_keytable.cpp */; };
 		DF0DF15C13A3ADA7008ED511 /* NFSDirectory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF0DF15913A3ADA7008ED511 /* NFSDirectory.cpp */; };
 		DF24A6B41406C7C500C7721E /* AFPDirectory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF24A6B01406C7C500C7721E /* AFPDirectory.cpp */; };
+		DF2DD8DC158E734000D15CB3 /* AEDSPDRCompressor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8D4158E734000D15CB3 /* AEDSPDRCompressor.cpp */; };
+		DF2DD8DD158E734000D15CB3 /* AEDSPHeadphonesHRTF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8D6158E734000D15CB3 /* AEDSPHeadphonesHRTF.cpp */; };
+		DF2DD8DE158E734000D15CB3 /* AEDSPLowPassFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8D8158E734000D15CB3 /* AEDSPLowPassFilter.cpp */; };
+		DF2DD8DF158E734000D15CB3 /* AEDSPResample.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8DA158E734000D15CB3 /* AEDSPResample.cpp */; };
 		DF3488E713FD958F0026A711 /* GUIAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF3488E513FD958F0026A711 /* GUIAction.cpp */; };
 		DF34892A13FD9C780026A711 /* AirPlayServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF34892813FD9C780026A711 /* AirPlayServer.cpp */; };
 		DF34898213FDAAF60026A711 /* HttpParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF34898113FDAAF60026A711 /* HttpParser.cpp */; };
@@ -1677,6 +1681,15 @@
 		DF0DF15A13A3ADA7008ED511 /* NFSDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NFSDirectory.h; sourceTree = "<group>"; };
 		DF24A6B01406C7C500C7721E /* AFPDirectory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AFPDirectory.cpp; sourceTree = "<group>"; };
 		DF24A6B11406C7C500C7721E /* AFPDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFPDirectory.h; sourceTree = "<group>"; };
+		DF2DD8D4158E734000D15CB3 /* AEDSPDRCompressor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPDRCompressor.cpp; sourceTree = "<group>"; };
+		DF2DD8D5158E734000D15CB3 /* AEDSPDRCompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPDRCompressor.h; sourceTree = "<group>"; };
+		DF2DD8D6158E734000D15CB3 /* AEDSPHeadphonesHRTF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPHeadphonesHRTF.cpp; sourceTree = "<group>"; };
+		DF2DD8D7158E734000D15CB3 /* AEDSPHeadphonesHRTF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPHeadphonesHRTF.h; sourceTree = "<group>"; };
+		DF2DD8D8158E734000D15CB3 /* AEDSPLowPassFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPLowPassFilter.cpp; sourceTree = "<group>"; };
+		DF2DD8D9158E734000D15CB3 /* AEDSPLowPassFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPLowPassFilter.h; sourceTree = "<group>"; };
+		DF2DD8DA158E734000D15CB3 /* AEDSPResample.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPResample.cpp; sourceTree = "<group>"; };
+		DF2DD8DB158E734000D15CB3 /* AEDSPResample.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPResample.h; sourceTree = "<group>"; };
+		DF2DD8E2158E756E00D15CB3 /* AEDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSP.h; sourceTree = "<group>"; };
 		DF3488E513FD958F0026A711 /* GUIAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GUIAction.cpp; sourceTree = "<group>"; };
 		DF3488E613FD958F0026A711 /* GUIAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GUIAction.h; sourceTree = "<group>"; };
 		DF34892813FD9C780026A711 /* AirPlayServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AirPlayServer.cpp; sourceTree = "<group>"; };
@@ -4158,6 +4171,21 @@
 			name = Documentation;
 			sourceTree = "<group>";
 		};
+		DF2DD8D3158E734000D15CB3 /* DSP */ = {
+			isa = PBXGroup;
+			children = (
+				DF2DD8D4158E734000D15CB3 /* AEDSPDRCompressor.cpp */,
+				DF2DD8D5158E734000D15CB3 /* AEDSPDRCompressor.h */,
+				DF2DD8D6158E734000D15CB3 /* AEDSPHeadphonesHRTF.cpp */,
+				DF2DD8D7158E734000D15CB3 /* AEDSPHeadphonesHRTF.h */,
+				DF2DD8D8158E734000D15CB3 /* AEDSPLowPassFilter.cpp */,
+				DF2DD8D9158E734000D15CB3 /* AEDSPLowPassFilter.h */,
+				DF2DD8DA158E734000D15CB3 /* AEDSPResample.cpp */,
+				DF2DD8DB158E734000D15CB3 /* AEDSPResample.h */,
+			);
+			path = DSP;
+			sourceTree = "<group>";
+		};
 		DF527729151BAF4C00B5B63B /* websocket */ = {
 			isa = PBXGroup;
 			children = (
@@ -4176,6 +4204,7 @@
 		DFB65F6315373AE7006B8FF1 /* AudioEngine */ = {
 			isa = PBXGroup;
 			children = (
+				DF2DD8D3158E734000D15CB3 /* DSP */,
 				DFB65F6915373AE7006B8FF1 /* Encoders */,
 				DFB65F6C15373AE7006B8FF1 /* Engines */,
 				DFB65F8815373AE7006B8FF1 /* Interfaces */,
@@ -4208,6 +4237,7 @@
 			isa = PBXGroup;
 			children = (
 				DFB65F8915373AE7006B8FF1 /* AE.h */,
+				DF2DD8E2158E756E00D15CB3 /* AEDSP.h */,
 				DFB65F8A15373AE7006B8FF1 /* AEEncoder.h */,
 				DFB65F8B15373AE7006B8FF1 /* AEPostProc.h */,
 				DFB65F8C15373AE7006B8FF1 /* AESink.h */,
@@ -7311,6 +7341,10 @@
 				36A9443D15821E2800727135 /* DatabaseUtils.cpp in Sources */,
 				36A9444115821E7C00727135 /* SortUtils.cpp in Sources */,
 				1DE0443515828F4B005DDB4D /* Exception.cpp in Sources */,
+				DF2DD8DC158E734000D15CB3 /* AEDSPDRCompressor.cpp in Sources */,
+				DF2DD8DD158E734000D15CB3 /* AEDSPHeadphonesHRTF.cpp in Sources */,
+				DF2DD8DE158E734000D15CB3 /* AEDSPLowPassFilter.cpp in Sources */,
+				DF2DD8DF158E734000D15CB3 /* AEDSPResample.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
