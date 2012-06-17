@@ -292,14 +292,11 @@ void CCoreAudioAE::Deinitialize()
 
 void CCoreAudioAE::OnSettingsChange(std::string setting)
 {
-  if (setting == "audiooutput.normalizelevels")
-  {
-    // re-init streams remapper
-    CSingleLock streamLock(m_streamLock);
-    for (StreamList::iterator itt = m_streams.begin(); itt != m_streams.end(); ++itt)
-      (*itt)->InitializeRemap();
-    streamLock.Leave();
-  }
+  // re-init streams remapper
+  CSingleLock streamLock(m_streamLock);
+  for (StreamList::iterator itt = m_streams.begin(); itt != m_streams.end(); ++itt)
+    (*itt)->OnSettingsChange(setting);
+  streamLock.Leave();
 
   if (setting == "audiooutput.passthroughdevice" ||
       setting == "audiooutput.custompassthrough" ||

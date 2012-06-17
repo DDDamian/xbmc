@@ -29,6 +29,8 @@
 #include "CoreAudioRingBuffer.h"
 #include "ICoreAudioSource.h"
 #include "Interfaces/AEStream.h"
+#include "Interfaces/AEDSP.h"
+#include "threads/CriticalSection.h"
 
 #if defined(TARGET_DARWIN_IOS)
 # include "CoreAudioAEHALIOS.h"
@@ -99,6 +101,8 @@ public:
   virtual void RegisterSlave(IAEStream *stream);
   virtual bool HasVideo() {return m_hasVideo; }
 
+  void OnSettingsChange(std::string setting);
+  
   OSStatus Render(AudioUnitRenderActionFlags* actionFlags, 
     const AudioTimeStamp* pTimeStamp, 
     UInt32 busNumber, 
@@ -169,5 +173,10 @@ private:
   bool              m_doRemap;
   void              Upmix(void *input, unsigned int channelsInput, void *output, unsigned int channelsOutput, unsigned int frames, AEDataFormat dataFormat);
   bool              m_firstInput;
+  
+  CCriticalSection  m_dspLock;
+  AEDSPList         m_dspList;
+  inline void*      RunDSPStage(float *data, unsigned int samples);
+  void              LoadAndInitDSPs();
 };
 
