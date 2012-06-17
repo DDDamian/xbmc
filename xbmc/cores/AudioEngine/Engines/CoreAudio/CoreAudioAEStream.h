@@ -97,6 +97,7 @@ public:
   virtual void FadeVolume(float from, float to, unsigned int time);
   virtual bool IsFading();
   virtual void RegisterSlave(IAEStream *stream);
+  virtual bool HasVideo() {return m_hasVideo; }
 
   OSStatus Render(AudioUnitRenderActionFlags* actionFlags, 
     const AudioTimeStamp* pTimeStamp, 
@@ -149,6 +150,7 @@ private:
   SRC_STATE              *m_ssrc;
   SRC_DATA                m_ssrcData;
   bool                    m_paused;
+  bool                    m_hasVideo;
   bool                    m_draining;
   unsigned int            m_AvgBytesPerSec;
 

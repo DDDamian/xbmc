@@ -98,6 +98,7 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
   m_slave           (NULL ),
   m_convertFn       (NULL ),
   m_ssrc            (NULL ),
+  m_hasVideo        (false),
   m_draining        (false),
   m_audioCallback   (NULL ),
   m_AvgBytesPerSec  (0    ),
@@ -123,6 +124,7 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
 
   //m_forceResample                 = (options & AESTREAM_FORCE_RESAMPLE) != 0;
   m_paused                        = (options & AESTREAM_PAUSED) != 0;
+  m_hasVideo                      = (options & AESTREAM_HASVIDEO) != 0;
 
   m_vizRemapBufferSize            = m_remapBufferSize = /*m_resampleBufferSize = */ m_upmixBufferSize = m_convertBufferSize = 16*1024;
   m_convertBuffer                 = (float   *)_aligned_malloc(m_convertBufferSize,16);
