@@ -197,12 +197,12 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
 
 CCoreAudioAEStream::~CCoreAudioAEStream()
 {
+  Destroy();
+
   CloseConverter();
 
   m_delete = true;
   m_valid = false;
-
-  InternalFlush();
 
   _aligned_free(m_convertBuffer);
   //_aligned_free(m_resampleBuffer);
@@ -321,6 +321,7 @@ void CCoreAudioAEStream::Initialize()
     if (!m_remap.Initialize(m_StreamFormat.m_channelLayout, m_OutputFormat.m_channelLayout, false))
     {
       m_valid = false;
+      Destroy();
       return;
     }
 
@@ -332,6 +333,7 @@ void CCoreAudioAEStream::Initialize()
     if (!m_vizRemap.Initialize(m_OutputFormat.m_channelLayout, CAEChannelInfo(AE_CH_LAYOUT_2_0), false, true))
     {
       m_valid = false;
+      Destroy();
       return;
     }
   }
