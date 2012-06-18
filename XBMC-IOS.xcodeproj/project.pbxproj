@@ -41,6 +41,10 @@
 		C8936072152C871400812418 /* PythonMonitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8936070152C871400812418 /* PythonMonitor.cpp */; };
 		C8EC5D26136953E100CCC10D /* XBMC_keytable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8EC5D24136953E100CCC10D /* XBMC_keytable.cpp */; };
 		DF0DF18013A3AF9F008ED511 /* NFSDirectory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF0DF17D13A3AF9F008ED511 /* NFSDirectory.cpp */; };
+		DF2DD900158E771D00D15CB3 /* AEDSPDRCompressor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8F8158E771D00D15CB3 /* AEDSPDRCompressor.cpp */; };
+		DF2DD901158E771D00D15CB3 /* AEDSPHeadphonesHRTF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8FA158E771D00D15CB3 /* AEDSPHeadphonesHRTF.cpp */; };
+		DF2DD902158E771D00D15CB3 /* AEDSPLowPassFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8FC158E771D00D15CB3 /* AEDSPLowPassFilter.cpp */; };
+		DF2DD903158E771D00D15CB3 /* AEDSPResample.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2DD8FE158E771D00D15CB3 /* AEDSPResample.cpp */; };
 		DF2E329415509B2C000F5772 /* XbmcContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2E329215509B2C000F5772 /* XbmcContext.cpp */; };
 		DF33C29415509BF50046CDCB /* ilog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF33C29115509BF50046CDCB /* ilog.cpp */; };
 		DF3488F813FD961A0026A711 /* GUIAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF3488F613FD961A0026A711 /* GUIAction.cpp */; };
@@ -1050,6 +1054,15 @@
 		C8EC5D25136953E100CCC10D /* XBMC_keytable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XBMC_keytable.h; sourceTree = "<group>"; };
 		DF0DF17D13A3AF9F008ED511 /* NFSDirectory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NFSDirectory.cpp; sourceTree = "<group>"; };
 		DF0DF17E13A3AF9F008ED511 /* NFSDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NFSDirectory.h; sourceTree = "<group>"; };
+		DF2DD8F8158E771D00D15CB3 /* AEDSPDRCompressor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPDRCompressor.cpp; sourceTree = "<group>"; };
+		DF2DD8F9158E771D00D15CB3 /* AEDSPDRCompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPDRCompressor.h; sourceTree = "<group>"; };
+		DF2DD8FA158E771D00D15CB3 /* AEDSPHeadphonesHRTF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPHeadphonesHRTF.cpp; sourceTree = "<group>"; };
+		DF2DD8FB158E771D00D15CB3 /* AEDSPHeadphonesHRTF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPHeadphonesHRTF.h; sourceTree = "<group>"; };
+		DF2DD8FC158E771D00D15CB3 /* AEDSPLowPassFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPLowPassFilter.cpp; sourceTree = "<group>"; };
+		DF2DD8FD158E771D00D15CB3 /* AEDSPLowPassFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPLowPassFilter.h; sourceTree = "<group>"; };
+		DF2DD8FE158E771D00D15CB3 /* AEDSPResample.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AEDSPResample.cpp; sourceTree = "<group>"; };
+		DF2DD8FF158E771D00D15CB3 /* AEDSPResample.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSPResample.h; sourceTree = "<group>"; };
+		DF2DD904158E773000D15CB3 /* AEDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AEDSP.h; sourceTree = "<group>"; };
 		DF2E329215509B2C000F5772 /* XbmcContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = XbmcContext.cpp; sourceTree = "<group>"; };
 		DF2E329315509B2C000F5772 /* XbmcContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XbmcContext.h; sourceTree = "<group>"; };
 		DF33C29115509BF50046CDCB /* ilog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ilog.cpp; sourceTree = "<group>"; };
@@ -3127,6 +3140,21 @@
 			name = Documentation;
 			sourceTree = "<group>";
 		};
+		DF2DD8F7158E771D00D15CB3 /* DSP */ = {
+			isa = PBXGroup;
+			children = (
+				DF2DD8F8158E771D00D15CB3 /* AEDSPDRCompressor.cpp */,
+				DF2DD8F9158E771D00D15CB3 /* AEDSPDRCompressor.h */,
+				DF2DD8FA158E771D00D15CB3 /* AEDSPHeadphonesHRTF.cpp */,
+				DF2DD8FB158E771D00D15CB3 /* AEDSPHeadphonesHRTF.h */,
+				DF2DD8FC158E771D00D15CB3 /* AEDSPLowPassFilter.cpp */,
+				DF2DD8FD158E771D00D15CB3 /* AEDSPLowPassFilter.h */,
+				DF2DD8FE158E771D00D15CB3 /* AEDSPResample.cpp */,
+				DF2DD8FF158E771D00D15CB3 /* AEDSPResample.h */,
+			);
+			path = DSP;
+			sourceTree = "<group>";
+		};
 		DF33C29015509BF50046CDCB /* commons */ = {
 			isa = PBXGroup;
 			children = (
@@ -3156,6 +3184,7 @@
 		DFB6620415376791006B8FF1 /* AudioEngine */ = {
 			isa = PBXGroup;
 			children = (
+				DF2DD8F7158E771D00D15CB3 /* DSP */,
 				DFB6620A15376791006B8FF1 /* Encoders */,
 				DFB6620D15376791006B8FF1 /* Engines */,
 				DFB6622915376791006B8FF1 /* Interfaces */,
@@ -3203,6 +3232,7 @@
 			isa = PBXGroup;
 			children = (
 				DFB6622A15376791006B8FF1 /* AE.h */,
+				DF2DD904158E773000D15CB3 /* AEDSP.h */,
 				DFB6622B15376791006B8FF1 /* AEEncoder.h */,
 				DFB6622C15376791006B8FF1 /* AEPostProc.h */,
 				DFB6622D15376791006B8FF1 /* AESink.h */,
@@ -7230,6 +7260,10 @@
 				36A9444E15821F2C00727135 /* DatabaseUtils.cpp in Sources */,
 				36A9445215821F5300727135 /* SortUtils.cpp in Sources */,
 				DFC3867E158296EC008AE277 /* Exception.cpp in Sources */,
+				DF2DD900158E771D00D15CB3 /* AEDSPDRCompressor.cpp in Sources */,
+				DF2DD901158E771D00D15CB3 /* AEDSPHeadphonesHRTF.cpp in Sources */,
+				DF2DD902158E771D00D15CB3 /* AEDSPLowPassFilter.cpp in Sources */,
+				DF2DD903158E771D00D15CB3 /* AEDSPResample.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

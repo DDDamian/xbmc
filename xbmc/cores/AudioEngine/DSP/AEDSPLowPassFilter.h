@@ -77,20 +77,20 @@ private:
 
   BIQUAD  coefs[FILTER_SECTIONS];  /* filter coefficients */
 
-  void  CAEDSPLowPassFilter::szxform   (LFP_TYPE *a0, LFP_TYPE *a1, LFP_TYPE *a2,   /* numerator coefficients */
+  void  szxform   (LFP_TYPE *a0, LFP_TYPE *a1, LFP_TYPE *a2,   /* numerator coefficients */
                                         LFP_TYPE *b0, LFP_TYPE *b1, LFP_TYPE *b2,   /* denominator coefficients */
                                         LFP_TYPE fc,           /* Filter cutoff frequency */
                                         LFP_TYPE fs,           /* sampling rate */
                                         LFP_TYPE *k,           /* overall gain factor */
                                         LFP_TYPE *coef);
 
-  void CAEDSPLowPassFilter::bilinear   (LFP_TYPE a0, LFP_TYPE a1, LFP_TYPE a2,    /* numerator coefficients */
+  void bilinear   (LFP_TYPE a0, LFP_TYPE a1, LFP_TYPE a2,    /* numerator coefficients */
                                         LFP_TYPE b0, LFP_TYPE b1, LFP_TYPE b2,    /* denominator coefficients */
                                         LFP_TYPE *k,           /* overall gain factor */
                                         LFP_TYPE fs,           /* sampling rate */
                                         LFP_TYPE *coef);       /* pointer to 4 iir coefficients */
 
-  void  CAEDSPLowPassFilter::prewarp   (LFP_TYPE *a0, LFP_TYPE *a1, LFP_TYPE *a2, LFP_TYPE fc, LFP_TYPE fs);
+  void  prewarp   (LFP_TYPE *a0, LFP_TYPE *a1, LFP_TYPE *a2, LFP_TYPE fc, LFP_TYPE fs);
 
   float*           m_returnBuffer;  /* store float buffer data for GetOutput() */
   unsigned int     m_returnSamples; /* store number of samples for GetOutput() */

@@ -35,6 +35,10 @@
 #include "settings/AdvancedSettings.h"
 #include "MathUtils.h"
 
+#include "DSP/AEDSPHeadphonesHRTF.h"
+#include "DSP/AEDSPDRCompressor.h"
+#include "DSP/AEDSPLowPassFilter.h"
+
 // typecast AE to CCoreAudioAE
 #define AE (*(CCoreAudioAE*)CAEFactory::AE)
 
@@ -89,6 +93,60 @@ void CCoreAudioAEStream::Upmix(void *input,
   }
 }
 
+void CCoreAudioAEStream::LoadAndInitDSPs()
+{
+  /* Load and initialize any DSP's */
+  if (!m_isRaw) //TODO: A more elegant method here
+  {
+    /* install the HeadphonesHRTF DSP */
+    IAEDSP *dsp;
+    if (g_advancedSettings.dspHRTFEnabled)
+    {
+      dsp = new CAEDSPHeadphonesHRTF();
+      if (dsp->Initialize(m_OutputFormat.m_channelLayout, m_OutputFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CCoreAudioAEStream::LoadAndInitDSPs - Loaded DSP HeadphonesHRTF");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CCoreAudioAEStream::LoadAndInitDSPs - Failed to initialize DSP HeadphonesHRTF");
+      }
+    }
+    /* install the DRCompressor DSP */
+    if (m_hasVideo && g_advancedSettings.dspDRCEnabled)
+    {
+      dsp = new CAEDSPDRCompressor();
+      if (dsp->Initialize(m_OutputFormat.m_channelLayout, m_OutputFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CCoreAudioAEStream::LoadAndInitDSPs - Loaded DSP Dynamic Range Compressor");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CCoreAudioAEStream::LoadAndInitDSPs - Failed to initialize DSP Dynamic Range Compressor");
+      }
+    }
+    /* install the LPFilter DSP */
+    if (g_advancedSettings.dspLPFilterEnabled)
+    {
+      dsp = new CAEDSPLowPassFilter();
+      if (dsp->Initialize(m_OutputFormat.m_channelLayout, m_OutputFormat.m_sampleRate))
+      {
+        m_dspList.push_back(dsp);
+        CLog::Log(LOGDEBUG, "CCoreAudioAEStream::LoadAndInitDSPs - Loaded DSP Low Pass Filter");
+      }
+      else
+      {
+        delete dsp;
+        CLog::Log(LOGERROR, "CCoreAudioAEStream::LoadAndInitDSPs - Failed to initialize DSP Low Pass Filter");
+      }
+    }
+  }  
+}
+
 CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned int sampleRate, unsigned int encodedSamplerate, CAEChannelInfo channelLayout, unsigned int options) :
   m_convertBuffer   (NULL ),
   m_valid           (false),
@@ -98,6 +156,7 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
   m_slave           (NULL ),
   m_convertFn       (NULL ),
   m_ssrc            (NULL ),
+  m_hasVideo        (false),
   m_draining        (false),
   m_audioCallback   (NULL ),
   m_AvgBytesPerSec  (0    ),
@@ -123,6 +182,7 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
 
   //m_forceResample                 = (options & AESTREAM_FORCE_RESAMPLE) != 0;
   m_paused                        = (options & AESTREAM_PAUSED) != 0;
+  m_hasVideo                      = (options & AESTREAM_HASVIDEO) != 0;
 
   m_vizRemapBufferSize            = m_remapBufferSize = /*m_resampleBufferSize = */ m_upmixBufferSize = m_convertBufferSize = 16*1024;
   m_convertBuffer                 = (float   *)_aligned_malloc(m_convertBufferSize,16);
@@ -132,16 +192,17 @@ CCoreAudioAEStream::CCoreAudioAEStream(enum AEDataFormat dataFormat, unsigned in
   m_vizRemapBuffer                = (uint8_t *)_aligned_malloc(m_vizRemapBufferSize,16);
 
   m_isRaw                         = COREAUDIO_IS_RAW(dataFormat);
+  LoadAndInitDSPs();
 }
 
 CCoreAudioAEStream::~CCoreAudioAEStream()
 {
+  Destroy();
+
   CloseConverter();
 
   m_delete = true;
   m_valid = false;
-
-  InternalFlush();
 
   _aligned_free(m_convertBuffer);
   //_aligned_free(m_resampleBuffer);
@@ -260,6 +321,7 @@ void CCoreAudioAEStream::Initialize()
     if (!m_remap.Initialize(m_StreamFormat.m_channelLayout, m_OutputFormat.m_channelLayout, false))
     {
       m_valid = false;
+      Destroy();
       return;
     }
 
@@ -271,6 +333,7 @@ void CCoreAudioAEStream::Initialize()
     if (!m_vizRemap.Initialize(m_OutputFormat.m_channelLayout, CAEChannelInfo(AE_CH_LAYOUT_2_0), false, true))
     {
       m_valid = false;
+      Destroy();
       return;
     }
   }
@@ -319,7 +382,35 @@ void CCoreAudioAEStream::Destroy()
 {
   m_valid  = false;
   m_delete = true;
+
+  /* remove and free any DSPs */
+  while(!m_dspList.empty())
+  {
+    IAEDSP *dsp = m_dspList.back();
+    m_dspList.pop_back();
+    delete dsp;
+  }
+
   InternalFlush();
+}
+
+inline void* CCoreAudioAEStream::RunDSPStage(float *data, unsigned int samples)
+{
+  /* Final output DSPs MUST have a 1:1 sample ratio */
+  CSingleLock dspLock(m_dspLock);
+  for(AEDSPList::iterator itt = m_dspList.begin(); itt != m_dspList.end(); ++itt)
+  {
+    IAEDSP *dsp = *itt;
+    unsigned int count;
+    
+    count = dsp->Process((float*)data, samples);
+    assert(count == samples);
+    
+    data = dsp->GetOutput(count);
+    assert(count == samples);
+  }
+  
+  return data;
 }
 
 unsigned int CCoreAudioAEStream::AddData(void *data, unsigned int size)
@@ -398,6 +489,7 @@ unsigned int CCoreAudioAEStream::AddData(void *data, unsigned int size)
     // downmix/remap the data
     m_remap.Remap((float *)adddata, (float *)m_remapBuffer, frames);
     adddata = (uint8_t *)m_remapBuffer;
+    samples = addsize / m_OutputBytesPerSample;
   }
 
   // upmix the ouput to 8 channels
@@ -433,7 +525,10 @@ unsigned int CCoreAudioAEStream::AddData(void *data, unsigned int size)
   if (addsize > room)
     size = 0;
   else
+  {
+    adddata = (uint8_t *)RunDSPStage((float *)adddata, samples);
     m_Buffer->Write(adddata, addsize);
+  }
 
   return size;
 }
@@ -706,6 +801,23 @@ void CCoreAudioAEStream::RegisterAudioCallback(IAudioCallback* pCallback)
 void CCoreAudioAEStream::UnRegisterAudioCallback()
 {
   m_audioCallback = NULL;
+}
+
+void CCoreAudioAEStream::OnSettingsChange(std::string setting)
+{
+  
+  if (setting == "audiooutput.normalizelevels")
+  {
+    InitializeRemap();
+  }
+  
+  /* tell the DSPs about the change */
+  CSingleLock dspLock(m_dspLock);
+  for(AEDSPList::iterator itt = m_dspList.begin(); itt != m_dspList.end(); ++itt)
+  {
+    IAEDSP *dsp = *itt;
+    dsp->OnSettingChange(setting);
+  }
 }
 
 void CCoreAudioAEStream::FadeVolume(float from, float target, unsigned int time)
